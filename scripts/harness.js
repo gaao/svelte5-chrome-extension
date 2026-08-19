@@ -10,7 +10,7 @@ import { JSDOM } from 'jsdom';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { compile } from 'svelte/compiler';
+import { compile, compileModule } from 'svelte/compiler';
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -27,12 +27,20 @@ export function createDom() {
     'Node',
     'Element',
     'HTMLElement',
+    'HTMLInputElement',
+    'HTMLTextAreaElement',
+    'HTMLSelectElement',
+    'HTMLMediaElement',
+    'HTMLAnchorElement',
     'SVGElement',
     'Text',
     'Comment',
     'DocumentFragment',
     'CustomEvent',
     'Event',
+    'MouseEvent',
+    'KeyboardElement',
+    'KeyboardEvent',
     'MutationObserver',
     'requestAnimationFrame',
     'cancelAnimationFrame',
@@ -75,13 +83,17 @@ export async function loadComponent(file) {
 
   const source = readFileSync(abs, 'utf8');
   const relative = abs.slice(root.length + 1).replace(/\\/g, '/');
-  const { js } = compile(source, { filename: relative, dev: true, generate: 'client' });
+  // `.svelte.js` / `.svelte.ts` modules use runes too, and go through
+  // `compileModule` rather than the component compiler.
+  const { js } = abs.endsWith('.svelte')
+    ? compile(source, { filename: relative, dev: true, generate: 'client' })
+    : compileModule(source, { filename: relative, dev: true, generate: 'client' });
 
   const deps = new Map();
   let code = js.code.replace(
     /import\s+([^;'"]+?)\s+from\s+['"](\.[^'"]+)['"];/g,
     (match, clause, spec) => {
-      const target = resolve(dirname(abs), spec);
+      let target = resolve(dirname(abs), spec);
       const alias = `d${cache.size}_${deps.size}`;
       deps.set(alias, target);
       const trimmed = clause.trim();
@@ -113,7 +125,9 @@ export async function loadComponent(file) {
   }
 
   for (const [alias, target] of deps) {
-    globalThis.__deps[alias] = target.endsWith('.svelte')
+    // Runes are available in `.svelte` components and `.svelte.js` modules, both
+    // of which need compiling; anything else is plain JS and imports directly.
+    globalThis.__deps[alias] = /\.svelte(\.[jt]s)?$/.test(target)
       ? await loadComponent(target)
       : await import(pathToFileURL(target).href);
   }

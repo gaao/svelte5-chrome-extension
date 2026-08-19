@@ -10,7 +10,7 @@
     "dev:agent": "rollup -c -w",
     "build": "vite build && rollup -c",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "test": "node --conditions=browser scripts/test-tree.js && node --conditions=browser scripts/test-agent.js && node --conditions=browser scripts/test-plugin.js && node --conditions=browser scripts/test-integration.js",
+    "test": "node --conditions=browser scripts/test-tree.js && node --conditions=browser scripts/test-agent.js && node --conditions=browser scripts/test-plugin.js && node --conditions=browser scripts/test-integration.js && node --conditions=browser scripts/test-panel.js",
     "playground": "vite --config playground/vite.config.js"
   },
   "devDependencies": {

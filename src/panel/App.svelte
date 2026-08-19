@@ -116,7 +116,7 @@
   $effect(() => {
     if (!app.selectedId || !treeEl) return;
     const row = treeEl.querySelector(`[data-node-id="${app.selectedId}"]`);
-    row?.scrollIntoView({ block: 'nearest' });
+    row?.scrollIntoView?.({ block: 'nearest' });
   });
 
   function startResize(event) {

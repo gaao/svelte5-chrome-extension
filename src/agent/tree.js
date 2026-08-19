@@ -199,6 +199,7 @@ export function buildTree({ root = document } = {}) {
   }
 
   synthesizeIterations(rootNode, byId);
+  assignComponentIdentity(rootNode);
 
   return {
     root: rootNode,
@@ -206,6 +207,45 @@ export function buildTree({ root = document } = {}) {
     elements: elementNodes,
     stats: { elements: elementNodes.size, groups: groupNodes.size }
   };
+}
+
+/**
+ * Annotates component nodes with the information the Tier 2 hook needs.
+ *
+ * A component entry's `file`/`line` point at the *call site* (where `<Counter />`
+ * is written), not at the component's own source file. The hook keys its
+ * registry by the component's own file, which is recoverable from the elements
+ * the component renders. Instance order follows document order, matching the
+ * order `push` runs during mount.
+ */
+function assignComponentIdentity(root) {
+  const counters = new Map();
+
+  const ownFileOf = (node) => {
+    // The first descendant element that is not itself inside a nested component
+    // was rendered by this component, so its `loc.file` is this component's file.
+    const queue = [...node.children];
+    while (queue.length) {
+      const child = queue.shift();
+      if (child.type === 'element') return child.loc?.file ?? null;
+      if (child.type === 'component') continue;
+      queue.push(...child.children);
+    }
+    return null;
+  };
+
+  (function walk(node) {
+    if (node.type === 'component') {
+      const file = ownFileOf(node);
+      node.componentFile = file;
+      if (file) {
+        const seen = counters.get(file) ?? 0;
+        node.instanceIndex = seen;
+        counters.set(file, seen + 1);
+      }
+    }
+    for (const child of node.children) walk(child);
+  })(root);
 }
 
 /**

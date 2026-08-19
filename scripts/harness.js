@@ -93,6 +93,25 @@ export async function loadComponent(file) {
     }
   );
 
+  // Let a test install an instrumented runtime namespace, which is how the
+  // Tier 2 plugin's push/pop/tag interception is exercised without a bundler.
+  //
+  // The compiled component assigns `Component[$.FILENAME]` near the top of the
+  // module, which can precede the original import statement's position after
+  // rewriting. The namespace binding is therefore hoisted to the very start of
+  // the file so it is initialised before any component code runs.
+  const clientImport = /import\s+\*\s+as\s+(\$\w*)\s+from\s+["']svelte\/internal\/client["'];/;
+  const clientMatch = code.match(clientImport);
+  if (clientMatch) {
+    const binding = clientMatch[1];
+    code =
+      `import * as __real_client from 'svelte/internal/client';\n` +
+      `const ${binding} = new Proxy(__real_client, {\n` +
+      `  get: (t, p) => (globalThis.__svelteClientOverride ?? t)[p]\n` +
+      `});\n` +
+      code.replace(clientImport, '');
+  }
+
   for (const [alias, target] of deps) {
     globalThis.__deps[alias] = target.endsWith('.svelte')
       ? await loadComponent(target)

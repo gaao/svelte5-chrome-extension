@@ -233,7 +233,14 @@ window[GLOBAL] = {
     return formatTree(tree?.root);
   },
   nodeById,
-  elementFor
+  elementFor,
+  /**
+   * Maps a DOM element to the id of the nearest tree node. Used by the
+   * devtools page to mirror the Elements panel's `$0` selection.
+   */
+  nodeIdForElement(el) {
+    return el instanceof Element ? elementToNodeId(el) : null;
+  }
 };
 
 // Announce readiness; the panel replies with `ext/init`.

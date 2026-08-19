@@ -37,7 +37,7 @@ export function readState(node) {
   if (!node) return { tier: 1, values: {} };
 
   if (hasHook()) {
-    const record = hook().stateFor?.(node);
+    const record = hook().stateFor?.(descriptorFor(node));
     if (record) return { tier: 2, values: record };
   }
 
@@ -53,6 +53,19 @@ export function readState(node) {
 }
 
 /**
+ * Describes a node for the hook. Components are looked up by their own source
+ * file plus instance index, since `loc` on a component node refers to the call
+ * site in the parent rather than the component's own file.
+ */
+function descriptorFor(node) {
+  return {
+    loc: node.componentFile ? { file: node.componentFile } : node.loc,
+    file: node.componentFile ?? node.file,
+    instanceIndex: node.instanceIndex ?? 0
+  };
+}
+
+/**
  * Writes a value into reactive state.
  *
  * @param {object} node
@@ -64,8 +77,10 @@ export function writeState(node, path, value) {
   if (!hasHook()) {
     return { ok: false, error: 'Editing state requires the svelte5-devtools Vite plugin.' };
   }
+  if (!node || !path?.length) return { ok: false, error: 'Nothing to write.' };
+
   try {
-    const target = hook().targetFor?.(node, path.slice(0, -1));
+    const target = hook().targetFor?.(descriptorFor(node), path.slice(0, -1));
     if (!target || typeof target !== 'object') {
       return { ok: false, error: 'Target is not writable.' };
     }

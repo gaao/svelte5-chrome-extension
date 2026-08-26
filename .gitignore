@@ -1,5 +1,28 @@
+
 node_modules/
-build/
-dist/
+
 .probe/
 *.log
+
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env：开发期配置（.env / .env.development）团队共用、入库同步；
+# 本机覆盖（*.local）与生产配置（.env.production*）不入库——真实密钥只放 .local 或部署环境
+.env.local
+.env.*.local
+.env.production*
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+

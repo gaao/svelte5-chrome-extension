@@ -131,17 +131,48 @@ function stopInspecting() {
   clearHighlight();
 }
 
-// ---- message handling ---------------------------------------------------
+// ---- startup ------------------------------------------------------------
+
+/**
+ * Start watching the page and report what we found. The agent runs
+ * independently of the panel: it is injected whenever the devtools panel is
+ * open, so it must boot itself rather than wait for a message that only
+ * exists in the other direction.
+ */
+function start() {
+  const info = detect();
+  send('bypass::ext/agent-ready', info);
+
+  if (!info.hasMeta) {
+    // The app may mount after our script runs (async import, late mount). Poll
+    // briefly for metadata rather than concluding there is nothing to inspect.
+    let attempts = 0;
+    const check = () => {
+      attempts += 1;
+      if (probeMeta()) {
+        const fresh = detect();
+        send('bypass::ext/agent-ready', fresh);
+        beginTree();
+      } else if (attempts < 40) {
+        setTimeout(check, 250);
+      }
+    };
+    setTimeout(check, 250);
+    return;
+  }
+
+  beginTree();
+}
+
+function beginTree() {
+  observer?.stop();
+  observer = createObserver(rebuild);
+  rebuild();
+}
 
 const handlers = {
   'bridge::ext/init'() {
-    const info = detect();
-    send('bypass::ext/detected', info);
-    if (info.hasMeta) {
-      observer?.stop();
-      observer = createObserver(rebuild);
-      rebuild();
-    }
+    start();
   },
 
   'bridge::ext/refresh'() {
@@ -243,5 +274,5 @@ window[GLOBAL] = {
   }
 };
 
-// Announce readiness; the panel replies with `ext/init`.
-send('bypass::ext/agent-ready', detect());
+// Boot as soon as we run.
+start();

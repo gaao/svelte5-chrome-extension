@@ -153,13 +153,21 @@ function shim(SOURCE) {
   });
 }
 
-/** Runs in the MAIN world; loads the agent module into the page. */
+/**
+ * Runs in the MAIN world; loads the agent into the page.
+ *
+ * A classic script, not `type="module"`: the agent is bundled as a self-
+ * contained IIFE, and a classic `<script src>` to a web-accessible extension
+ * resource executes immediately on insertion. A module script from a
+ * chrome-extension:// URL injected into an http page is deferred and subject to
+ * module CORS rules that reliably leave it unexecuted.
+ */
 function attach(src) {
   if (document.querySelector(`script[data-svelte-devtools-agent]`)) return;
   const script = document.createElement('script');
-  script.type = 'module';
   script.src = src;
   script.dataset.svelteDevtoolsAgent = '';
+  script.async = false;
   (document.head || document.documentElement).appendChild(script);
 }
 

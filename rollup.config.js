@@ -14,8 +14,13 @@ export default [
   {
     input: 'src/agent/index.js',
     output: {
+      // Classic IIFE, not ESM: the agent is injected into the inspected page
+      // via a <script src> pointing at a chrome-extension:// URL. Module scripts
+      // loaded cross-scheme that way are deferred and subject to CORS module
+      // fetch rules; a classic script (the approach the Svelte 4 devtools used)
+      // executes immediately on insertion.
       file: 'build/agent.js',
-      format: 'esm',
+      format: 'iife',
       sourcemap: true
     },
     plugins: [nodeResolve()]

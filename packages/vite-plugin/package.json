@@ -1,0 +1,17 @@
+{
+  "name": "svelte5-devtools-vite",
+  "version": "0.1.0",
+  "description": "Vite plugin that exposes Svelte 5 reactive state to the Svelte 5 DevTools extension",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": ["src"],
+  "peerDependencies": {
+    "svelte": "^5.35.1",
+    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"
+  },
+  "keywords": ["svelte", "devtools", "vite-plugin"],
+  "license": "MIT"
+}

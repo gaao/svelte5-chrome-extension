@@ -1,4 +1,7 @@
 node_modules
+dist/
+.probe/
+*.log
 
 # Output
 .output
@@ -20,3 +23,6 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Extension build output
+build/

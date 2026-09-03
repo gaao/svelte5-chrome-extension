@@ -8,6 +8,9 @@
     ".": "./src/index.js"
   },
   "files": ["src"],
+  "dependencies": {
+    "launch-editor": "^2.14.0"
+  },
   "peerDependencies": {
     "svelte": "^5.35.1",
     "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"

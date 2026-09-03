@@ -74,6 +74,38 @@ export function svelteDevtools(options = {}) {
           injectTo: 'head-prepend'
         }
       ];
+    },
+
+    configureServer(server) {
+      if (!enabled) return;
+
+      // Vite's built-in `/__open-in-editor` ignores a chosen editor (it never
+      // passes `specifiedEditor` to launch-editor). This endpoint accepts
+      // `?file=...&editor=...` so the extension's IDE picker works.
+      server.middlewares.use('/__svelte-devtools/open', async (req, res) => {
+        try {
+          const url = new URL(req.url, 'http://localhost');
+          const file = url.searchParams.get('file');
+          const editor = url.searchParams.get('editor') || undefined;
+
+          if (!file) {
+            res.statusCode = 400;
+            res.end('missing "file"');
+            return;
+          }
+
+          const launch = (await import('launch-editor')).default;
+          launch(file, editor, (fileName, errorMsg) => {
+            console.warn(
+              `[svelte5-devtools] could not open ${fileName}${editor ? ` with ${editor}` : ''}: ${errorMsg}`
+            );
+          });
+          res.end();
+        } catch (error) {
+          res.statusCode = 500;
+          res.end(String(error?.message || error));
+        }
+      });
     }
   };
 }

@@ -16,10 +16,30 @@
     runSearch,
     stepSearch,
     writeState,
-    revealAndSelect
+    revealAndSelect,
+    setEditor
   } from './lib/runtime.svelte.js';
   import TreeNode from './lib/nodes/TreeNode.svelte';
   import PropertyList from './lib/panel/PropertyList.svelte';
+
+  /**
+   * IDEs launch-editor knows how to launch. The `id` is passed to the Tier 2
+   * plugin as `?editor=`; `''` leaves it to Vite to auto-detect the editor
+   * that has the project open.
+   */
+  const EDITORS = [
+    { id: '', label: 'Editor: auto-detect' },
+    { id: 'code', label: 'Visual Studio Code' },
+    { id: 'code-insiders', label: 'VS Code Insiders' },
+    { id: 'cursor', label: 'Cursor' },
+    { id: 'trae', label: 'Trae' },
+    { id: 'antigravity', label: 'Antigravity' },
+    { id: 'windsurf', label: 'Windsurf' },
+    { id: 'codium', label: 'VSCodium' },
+    { id: 'webstorm', label: 'WebStorm' },
+    { id: 'zed', label: 'Zed' },
+    { id: 'subl', label: 'Sublime Text' }
+  ];
 
   let detailsWidth = $state(380);
   let resizing = $state(false);
@@ -214,6 +234,16 @@
       </div>
     </details>
 
+    <label class="editor-picker" title="IDE used by “open in editor”">
+      <span class="editor-glyph">⤢</span>
+      <select bind:value={app.editor} onchange={(e) => setEditor(e.currentTarget.value)}>
+        <option value="">Editor: auto</option>
+        {#each EDITORS as ide (ide.id)}
+          <option value={ide.id}>{ide.label}</option>
+        {/each}
+      </select>
+    </label>
+
     <span class="spacer"></span>
 
     {#if app.status.tier === 1 && app.status.hasMeta}
@@ -394,6 +424,25 @@
   }
   .filter {
     position: relative;
+  }
+  .editor-picker {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .editor-glyph {
+    color: var(--dim);
+    font-size: 12px;
+  }
+  .editor-picker select {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--fg);
+    font-size: 11px;
+    padding: 1px 2px;
+    max-width: 130px;
+    cursor: pointer;
   }
   .filter summary {
     cursor: pointer;

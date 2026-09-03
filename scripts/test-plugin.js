@@ -89,6 +89,23 @@ const hookModule = await get('/@id/__x00__svelte5-devtools/hook');
 check('hook module served', hookModule.status === 200);
 check('hook installs the window global', hookModule.text.includes('__SVELTE_DEVTOOLS_HOOK__'));
 
+// IDE picker endpoint. A missing file should 400; a well-formed request should
+// be accepted (the editor may not exist in CI, so we don't assert it opens).
+const noFile = await get('/__svelte-devtools/open');
+check('editor endpoint rejects a request without file', noFile.status === 400, `got ${noFile.status}`);
+// Use an editor name guaranteed not to exist so running the test never actually
+// opens a window; the point is to verify the route accepts file + editor.
+const withEditor = await get(
+  '/__svelte-devtools/open?file=' +
+    encodeURIComponent('src/Counter.svelte:1:1') +
+    '&editor=__nonexistent_editor__'
+);
+check(
+  'editor endpoint accepts file + editor',
+  withEditor.status === 200,
+  `got ${withEditor.status}: ${withEditor.text.slice(0, 120)}`
+);
+
 // The plugin must not alter production builds.
 const prodPlugin = svelteDevtools();
 prodPlugin.config({}, { command: 'build' });
@@ -97,7 +114,13 @@ check(
   prodPlugin.resolveId.call({}, 'svelte/internal/client', undefined) === null
 );
 
-await server.close();
+// `server.close()` alone can hang on a lingering keep-alive connection from the
+// editor request above, so close the underlying HTTP server explicitly too.
+await new Promise((resolve) => {
+  server.httpServer?.close(() => resolve());
+  server.close().then(resolve);
+  setTimeout(resolve, 2000);
+});
 
 // ---- part 2: hook behaviour against the real runtime -------------------
 

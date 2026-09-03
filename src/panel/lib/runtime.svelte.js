@@ -32,6 +32,11 @@ export const app = $state({
   },
   inspecting: false,
   search: '',
+  /**
+   * IDE to open source in, passed through to the Tier 2 plugin. `''` means
+   * "let Vite auto-detect". Persisted via chrome.storage.
+   */
+  editor: '',
   /** @type {string[]} */
   matches: [],
   matchIndex: 0,
@@ -222,7 +227,7 @@ export function inspectInElements(id) {
   chrome.devtools.inspectedWindow.eval('inspect(window.$n)');
 }
 
-/** Opens the node's source location in the user's editor via Vite. */
+/** Opens the node's source location in the chosen editor via Vite. */
 export function openSource(id) {
   const node = app.nodes.get(id);
   if (!node?.loc) return;
@@ -231,9 +236,32 @@ export function openSource(id) {
       origin,
       file: node.loc.file,
       line: node.loc.line,
-      column: node.loc.column
+      column: node.loc.column,
+      editor: app.editor || undefined
     });
   });
+}
+
+/** Persisted across devtools sessions via the panel's localStorage. */
+const EDITOR_KEY = 'svelte-devtools.editor';
+
+export function setEditor(editor) {
+  app.editor = editor;
+  try {
+    if (editor) localStorage.setItem(EDITOR_KEY, editor);
+    else localStorage.removeItem(EDITOR_KEY);
+  } catch {
+    // Storage may be unavailable (privileged pages); the preference just
+    // won't persist for this session.
+  }
+}
+
+function loadEditor() {
+  try {
+    app.editor = localStorage.getItem(EDITOR_KEY) ?? '';
+  } catch {
+    app.editor = '';
+  }
 }
 
 // ---- search -------------------------------------------------------------
@@ -306,4 +334,5 @@ window.__svelteDevtoolsSelectFromElements = (id) => {
   if (app.nodes.has(id)) revealAndSelect(id);
 };
 
+loadEditor();
 connect();

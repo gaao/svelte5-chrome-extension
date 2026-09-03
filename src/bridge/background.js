@@ -189,15 +189,31 @@ function setIcon(tabId, info) {
 }
 
 /**
- * Opens a component source location. Vite's dev server exposes
- * `/__open-in-editor`, which is what the official Svelte inspector uses.
+ * Opens a component source location in an editor.
+ *
+ * Tries the Tier 2 plugin's `/__svelte-devtools/open` endpoint first, which
+ * honours a chosen IDE (`?editor=`). Falls back to Vite's built-in
+ * `/__open-in-editor` when the plugin is not installed, which is what the
+ * official Svelte inspector uses (it opens in whatever editor Vite detected).
  */
-async function openSource({ origin, file, line, column } = {}) {
+async function openSource({ origin, file, line, column, editor } = {}) {
   if (!origin || !file) return;
-  const url = `${origin}/__open-in-editor?file=${encodeURIComponent(`${file}:${line ?? 1}:${(column ?? 0) + 1}`)}`;
+  const target = encodeURIComponent(`${file}:${line ?? 1}:${(column ?? 0) + 1}`);
+
+  if (editor) {
+    try {
+      const res = await fetch(
+        `${origin}/__svelte-devtools/open?file=${target}&editor=${encodeURIComponent(editor)}`
+      );
+      if (res.ok) return;
+    } catch {
+      // Plugin endpoint unavailable; fall through to the built-in endpoint.
+    }
+  }
+
   try {
-    await fetch(url);
+    await fetch(`${origin}/__open-in-editor?file=${target}`);
   } catch {
-    // No dev server, or it does not support the endpoint.
+    // No dev server, or it does not support either endpoint.
   }
 }

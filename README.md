@@ -21,7 +21,7 @@ as a working prototype rather than a polished release.
 | Element rows with attributes and delegated event handlers | ✅ | ✅ |
 | Hover highlighting in the page | ✅ | ✅ |
 | Element picker (click a node in the page to select it) | ✅ | ✅ |
-| Source location per node, and "open in editor" | ✅ | ✅ |
+| Source location per node, and "open in editor" | ✅ (auto-detect IDE) | ✅ (choose your IDE) |
 | Reveal in the Elements panel, and `$0` → tree sync | ✅ | ✅ |
 | Indexed search with prev/next, node-type filters, keyboard navigation | ✅ | ✅ |
 | Breadcrumbs, resizable details pane, update flash | ✅ | ✅ |
@@ -73,6 +73,15 @@ export default {
 ```
 
 The plugin only activates for `vite serve`; production builds are untouched.
+
+### Choosing an IDE for "open in editor"
+
+The toolbar has an editor picker (auto-detect, VS Code, VS Code Insiders, Cursor,
+Trae, Antigravity, Windsurf, VSCodium, WebStorm, Zed, Sublime Text). The choice
+persists across sessions. Opening a specific IDE goes through the Tier 2
+plugin's `/__svelte-devtools/open` endpoint; without the plugin the click falls
+back to Vite's built-in endpoint, which opens whichever editor it detected
+running.
 
 ## How it works
 

@@ -116,6 +116,14 @@ const text = doc.body.textContent ?? '';
 console.log('\n=== rendering ===');
 check('status reflects the detected version', text.includes('Svelte 5'), text.slice(0, 80));
 check('tier 2 badge shown', text.includes('Tier 2'));
+
+const editorSelect = doc.querySelector('.editor-picker select');
+check('IDE picker is present', !!editorSelect);
+if (editorSelect) {
+  const labels = [...editorSelect.options].map((o) => o.textContent);
+  check('IDE picker lists mainstream editors', labels.some((l) => l.includes('VS Code') || l.includes('Visual Studio')));
+  check('IDE picker includes Trae', labels.some((l) => l.includes('Trae')));
+}
 check('root component rendered in the tree', text.includes('App'));
 check('child components rendered', text.includes('Counter') && text.includes('TodoList'));
 check('block types rendered', text.includes('each') || text.includes('if'));
